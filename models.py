@@ -1,7 +1,9 @@
+
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils.types import ChoiceType
-# cria a conexão do seu banco 
+
+# cria a conexão do seu banco
 db = create_engine("sqlite:///banco.db")
 
 # cria a base do banco de dados
@@ -26,28 +28,33 @@ class Usuario(Base):
         self.admin = admin
 
 
-
 # Pedido
 class Pedido(Base):
     __tablename__ = "pedidos"
 
     # STATUS_PEDIDOS = (
-    #    ("PENDENTE", "PENDENTE"),
-    #   ("CANCELADO", "CANCELADO"),
-    #  ("FINALIZADO", "FINALIZADO")
+    #     ("PENDENTE", "PENDENTE"),
+    #     ("CANCELADO", "CANCELADO"),
+    #     ("FINALIZADO", "FINALIZADO")
     # )
-   
 
-    id = Column ("id", Integer,primary_key=True, autoincrement=True)
-    status = Column("status", String) # pendente, cancelado, finalizado
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    status = Column("status", String)
     usuario = Column("usuario", ForeignKey("usuarios.id"))
     preco = Column("preco", Float)
-    # itens = 
+    itens = relationship("ItemPedido", cascade="all, delete")
 
     def __init__(self, usuario, status="PENDENTE", preco=0):
         self.usuario = usuario
         self.preco = preco
         self.status = status
+
+    def calcular_preco(self):
+        # percorrer todos os itens do pedido
+        # somar todos os precos de todos os itens dos pedidos
+        # editar no campo "preco" o valor final do preco do pedido
+        self.preco = sum(item.preco_unitario * item.quantidade for item in self.itens)
+
 
 # ItensPedido
 class ItemPedido(Base):
@@ -61,10 +68,16 @@ class ItemPedido(Base):
     pedido = Column("pedido", ForeignKey("pedidos.id"))
 
     def __init__(self, quantidade, sabor, tamanho, preco_unitario, pedido):
-        self.quantidade = quantidade 
+        self.quantidade = quantidade
         self.sabor = sabor
         self.tamanho = tamanho
         self.preco_unitario = preco_unitario
-        self.pedido = pedido 
+        self.pedido = pedido
 
 # executa a criação dos metadados do seu banco (cria efetivamente o banco de dados)
+
+
+# migrar o banco de dados
+
+# criar a migração: alembic revision --autogenerate -m "mensagem"
+# executar a migração: alembic upgrade head
